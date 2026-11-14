@@ -116,6 +116,29 @@
         "title": "Audit",
         "type": "object"
       },
+      "Balance": {
+        "properties": {
+          "balance_minor": {
+            "title": "Balance Minor",
+            "type": "integer"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/Status"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "balance_minor"
+        ],
+        "title": "Balance",
+        "type": "object"
+      },
       "Credentials": {
         "additionalProperties": false,
         "properties": {
@@ -279,6 +302,147 @@
         "title": "JournalDetail",
         "type": "object"
       },
+      "LabRequest": {
+        "properties": {
+          "body": {
+            "$ref": "#/components/schemas/Transfer"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "body"
+        ],
+        "title": "LabRequest",
+        "type": "object"
+      },
+      "LabResponse": {
+        "properties": {
+          "body": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TransferResult"
+              },
+              {
+                "$ref": "#/components/schemas/ErrorBody"
+              }
+            ],
+            "title": "Body"
+          },
+          "replayed": {
+            "title": "Replayed",
+            "type": "boolean"
+          },
+          "request_id": {
+            "format": "uuid",
+            "title": "Request Id",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "status",
+          "body",
+          "replayed",
+          "request_id"
+        ],
+        "title": "LabResponse",
+        "type": "object"
+      },
+      "LabResult": {
+        "properties": {
+          "after": {
+            "$ref": "#/components/schemas/LabSnapshot"
+          },
+          "before": {
+            "$ref": "#/components/schemas/LabSnapshot"
+          },
+          "checks": {
+            "additionalProperties": {
+              "type": "boolean"
+            },
+            "title": "Checks",
+            "type": "object"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "passed": {
+            "title": "Passed",
+            "type": "boolean"
+          },
+          "requests": {
+            "items": {
+              "$ref": "#/components/schemas/LabRequest"
+            },
+            "title": "Requests",
+            "type": "array"
+          },
+          "responses": {
+            "items": {
+              "$ref": "#/components/schemas/LabResponse"
+            },
+            "title": "Responses",
+            "type": "array"
+          },
+          "scenario": {
+            "title": "Scenario",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "scenario",
+          "passed",
+          "checks",
+          "requests",
+          "responses",
+          "before",
+          "after"
+        ],
+        "title": "LabResult",
+        "type": "object"
+      },
+      "LabSnapshot": {
+        "properties": {
+          "accounts": {
+            "items": {
+              "$ref": "#/components/schemas/Balance"
+            },
+            "title": "Accounts",
+            "type": "array"
+          },
+          "entries": {
+            "items": {
+              "$ref": "#/components/schemas/Line"
+            },
+            "title": "Entries",
+            "type": "array"
+          },
+          "journals": {
+            "items": {
+              "$ref": "#/components/schemas/Operation"
+            },
+            "title": "Journals",
+            "type": "array"
+          }
+        },
+        "required": [
+          "accounts",
+          "journals",
+          "entries"
+        ],
+        "title": "LabSnapshot",
+        "type": "object"
+      },
       "Limits": {
         "additionalProperties": false,
         "properties": {
@@ -300,6 +464,40 @@
           "per_day"
         ],
         "title": "Limits",
+        "type": "object"
+      },
+      "Line": {
+        "properties": {
+          "account_id": {
+            "format": "uuid",
+            "title": "Account Id",
+            "type": "string"
+          },
+          "amount": {
+            "title": "Amount",
+            "type": "integer"
+          },
+          "journal_id": {
+            "format": "uuid",
+            "title": "Journal Id",
+            "type": "string"
+          },
+          "side": {
+            "enum": [
+              "DEBIT",
+              "CREDIT"
+            ],
+            "title": "Side",
+            "type": "string"
+          }
+        },
+        "required": [
+          "account_id",
+          "amount",
+          "side",
+          "journal_id"
+        ],
+        "title": "Line",
         "type": "object"
       },
       "NewAccount": {
@@ -364,6 +562,46 @@
         "title": "NewUser",
         "type": "object"
       },
+      "Operation": {
+        "properties": {
+          "amount": {
+            "title": "Amount",
+            "type": "integer"
+          },
+          "destination_id": {
+            "format": "uuid",
+            "title": "Destination Id",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "FUNDING",
+              "TRANSFER"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "source_id": {
+            "format": "uuid",
+            "title": "Source Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "source_id",
+          "destination_id",
+          "amount"
+        ],
+        "title": "Operation",
+        "type": "object"
+      },
       "Role": {
         "enum": [
           "CUSTOMER",
@@ -371,6 +609,20 @@
           "ADMIN"
         ],
         "title": "Role",
+        "type": "string"
+      },
+      "Scenario": {
+        "enum": [
+          "success",
+          "insufficient",
+          "replay",
+          "conflict",
+          "concurrent",
+          "rollback",
+          "blocked",
+          "limit"
+        ],
+        "title": "Scenario",
         "type": "string"
       },
       "Status": {
@@ -1027,6 +1279,94 @@
           }
         },
         "summary": "Health"
+      }
+    },
+    "/api/lab/{scenario}": {
+      "post": {
+        "operationId": "lab_api_lab__scenario__post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "scenario",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Scenario"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LabResult"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          }
+        },
+        "summary": "Lab"
       }
     },
     "/api/limits": {

@@ -1,3 +1,4 @@
+import { Lab } from "./lab";
 import "@fontsource/instrument-sans/400.css";
 import "@fontsource/instrument-sans/500.css";
 import "@fontsource/instrument-sans/600.css";
@@ -41,6 +42,7 @@ import {
   LogOut,
   Settings2,
   ShieldCheck,
+  FlaskConical,
   Wallet,
   X,
 } from "lucide-react";
@@ -225,6 +227,11 @@ function Shell() {
               <NavLink to="/audit">
                 <ShieldCheck size={18} /> Аудит
               </NavLink>
+              {user.role === "ADMIN" && (
+                <NavLink to="/lab">
+                  <FlaskConical size={18} /> Лаборатория
+                </NavLink>
+              )}
             </nav>
           </>
         )}
@@ -1157,6 +1164,14 @@ createRoot(document.getElementById("root")!).render(
               element={
                 <Protected>
                   <AuditPage />
+                </Protected>
+              }
+            />
+            <Route
+              path="lab"
+              element={
+                <Protected admin>
+                  <Lab />
                 </Protected>
               }
             />

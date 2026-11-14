@@ -18,6 +18,7 @@ from vaultix.application.identity import (
     set_customer_active,
     token_hash,
 )
+from vaultix.application.lab import Scenario, run_scenario
 from vaultix.application.ledger import audit, open_account, transfer
 from vaultix.domain.rules import BusinessError, Role
 from vaultix.infrastructure.db import connect_engine, many, one, query
@@ -27,7 +28,11 @@ log = logging.getLogger("vaultix")
 
 
 def create_app(
-    engine: Engine, *, secure: bool = True, after_post: Callable[[], None] | None = None
+    engine: Engine,
+    *,
+    secure: bool = True,
+    after_post: Callable[[], None] | None = None,
+    lab_engine: Engine | None = None,
 ) -> FastAPI:
     app = FastAPI(
         title="Vaultix",
@@ -329,7 +334,37 @@ def create_app(
                 offset=offset,
             )
 
+    @app.post("/api/lab/{scenario}", response_model=c.LabResult)
+    def lab(scenario: Scenario, request: Request, user: dict = Depends(admin)):
+        if lab_engine is None:
+            raise BusinessError(403, "LAB_DISABLED")
+        result = run_scenario(lab_engine, scenario)
+        with engine.begin() as conn:
+            audit(
+                conn,
+                request.state.id,
+                "LAB_RUN",
+                "PASS" if result["passed"] else "FAIL",
+                user["id"],
+                result["id"],
+            )
+        return result
+
     return app
 
 
-app = create_app(connect_engine(), secure=os.getenv("APP_ENV") != "demo")
+def configured_app():
+    engine = connect_engine()
+    demo = os.getenv("APP_ENV") == "demo"
+    lab_url = os.getenv("LAB_DATABASE_URL")
+    lab_engine = connect_engine(lab_url) if demo and lab_url else None
+    if lab_engine is not None:
+        # Compare server identity and database name, including aliases of the same URL.
+        sql = "SELECT current_database(), inet_server_addr(), inet_server_port()"
+        with engine.connect() as primary, lab_engine.connect() as sandbox:
+            if query(primary, sql).one() == query(sandbox, sql).one():
+                raise RuntimeError("The lab requires a separate database")
+    return create_app(engine, secure=not demo, lab_engine=lab_engine)
+
+
+app = configured_app()

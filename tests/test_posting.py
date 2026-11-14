@@ -7,6 +7,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy.exc import IntegrityError
 from vaultix.api.main import create_app
 from vaultix.application.identity import passwords
+from vaultix.application.lab import Scenario, run_scenario
 from vaultix.application.ledger import open_account
 from vaultix.domain.rules import BusinessError, validate_debit
 from vaultix.infrastructure.db import connect_engine, one, query
@@ -187,3 +188,14 @@ def test_ledger_constraints(engine, pair):
         )
     with pytest.raises(IntegrityError), engine.begin() as conn:
         query(conn, "UPDATE entries SET amount=1 WHERE account_id=:id", id=source)
+
+
+@pytest.mark.parametrize("scenario", list(Scenario))
+def test_lab_scenarios(engine, scenario):
+    sandbox = connect_engine(os.environ["TEST_LAB_DATABASE_URL"])
+    assert sandbox.url.database != engine.url.database
+    try:
+        result = run_scenario(sandbox, scenario)
+        assert result["passed"], result["checks"]
+    finally:
+        sandbox.dispose()

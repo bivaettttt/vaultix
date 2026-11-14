@@ -114,3 +114,47 @@ class Audit(BaseModel):
 
 class ErrorBody(BaseModel):
     code: str
+
+
+class LabSnapshot(BaseModel):
+    class Balance(BaseModel):
+        id: UUID
+        status: Status
+        balance_minor: int
+
+    class Operation(BaseModel):
+        id: UUID
+        kind: Literal["FUNDING", "TRANSFER"]
+        source_id: UUID
+        destination_id: UUID
+        amount: int
+
+    class Line(Entry):
+        journal_id: UUID
+
+    accounts: list[Balance]
+    journals: list[Operation]
+    entries: list[Line]
+
+
+class LabRequest(BaseModel):
+    key: str
+    body: Transfer
+
+
+class LabResponse(BaseModel):
+    status: int
+    body: TransferResult | ErrorBody
+    replayed: bool
+    request_id: UUID
+
+
+class LabResult(BaseModel):
+    id: UUID
+    scenario: str
+    passed: bool
+    checks: dict[str, bool]
+    requests: list[LabRequest]
+    responses: list[LabResponse]
+    before: LabSnapshot
+    after: LabSnapshot

@@ -631,3 +631,64 @@ input::placeholder {
     padding: 1.4rem;
   }
 }
+
+.lab-grid {
+  display: grid;
+  grid-template-columns: minmax(230px, 1fr) 2fr;
+  gap: 1rem;
+}
+.lab-grid .form-panel {
+  max-width: none;
+}
+.scenario-list {
+  padding: 0.75rem;
+  display: grid;
+  gap: 0.35rem;
+}
+.scenario-list button {
+  text-align: left;
+}
+.scenario-list button[aria-pressed="true"] {
+  background: var(--mint);
+  border-color: #a6cbbc;
+  color: var(--green);
+}
+.checks {
+  list-style: none;
+  margin: 0;
+  padding: 0.5rem 1rem;
+}
+.checks li {
+  display: flex;
+  gap: 0.55rem;
+  align-items: center;
+  padding: 0.55rem 0;
+  color: var(--green);
+}
+.checks li span {
+  margin-left: auto;
+  font-size: 0.79rem;
+  color: var(--muted);
+}
+details {
+  padding: 0.85rem 1.15rem;
+  border-top: 1px solid var(--line);
+}
+summary {
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 0.86rem;
+}
+pre {
+  background: #f4f7f5;
+  padding: 0.75rem;
+  overflow: auto;
+  font-size: 0.78rem;
+  margin-bottom: 0;
+}
+@media (max-width: 760px) {
+  .lab-grid {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+}
