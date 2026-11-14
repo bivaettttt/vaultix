@@ -17,8 +17,15 @@ for document in root.rglob("*.md"):
                     f"Broken link in {document.relative_to(root)}: {destination}"
                 )
 bpmn = ElementTree.parse(root / "docs/diagrams/transfer.bpmn")
-ids = {node.get("id") for node in bpmn.iter() if node.get("id")}
+ids = set()
 for node in bpmn.iter():
-    for attribute in ("sourceRef", "targetRef", "attachedToRef"):
+    identifier = node.get("id")
+    if identifier is None:
+        continue
+    if identifier in ids:
+        raise SystemExit(f"Duplicate BPMN ID: {identifier}")
+    ids.add(identifier)
+for node in bpmn.iter():
+    for attribute in ("sourceRef", "targetRef", "attachedToRef", "bpmnElement"):
         if attribute in node.attrib and node.get(attribute) not in ids:
             raise SystemExit(f"Invalid BPMN reference: {node.attrib[attribute]}")

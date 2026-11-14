@@ -29,7 +29,7 @@
     <bpmn:sequenceFlow id="f11" sourceRef="post" targetRef="done" name="" />
     <bpmn:sequenceFlow id="f12" sourceRef="failure" targetRef="rollback" name="" />
     <bpmn:sequenceFlow id="f13" sourceRef="rollback" targetRef="done" name="" />
-    <bpmn:sequenceFlow id="f13" sourceRef="auth" targetRef="auth_ok" />
+    <bpmn:sequenceFlow id="f14" sourceRef="auth" targetRef="auth_ok" />
   </bpmn:process>
   <bpmndi:BPMNDiagram id="TransferDiagram">
     <bpmndi:BPMNPlane id="TransferPlane" bpmnElement="Transfer">
@@ -137,7 +137,7 @@
         <di:waypoint x="1173" y="295" />
         <di:waypoint x="1173" y="178" />
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="f13_di" bpmnElement="f13">
+      <bpmndi:BPMNEdge id="f14_di" bpmnElement="f14">
         <di:waypoint x="270" y="160.0" />
         <di:waypoint x="305" y="160.0" />
       </bpmndi:BPMNEdge>
