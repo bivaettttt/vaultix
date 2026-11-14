@@ -1,3 +1,4 @@
+import { ErrorNotice, Page } from "./ui";
 import { Lab } from "./lab";
 import "@fontsource/instrument-sans/400.css";
 import "@fontsource/instrument-sans/500.css";
@@ -282,37 +283,6 @@ function Shell() {
   );
 }
 
-export function ErrorNotice({ error }: { error: unknown }) {
-  if (!error) return null;
-  return (
-    <p className="error" role="alert">
-      {error instanceof Error ? error.message : "Ошибка запроса."}
-      {error instanceof ApiError && error.requestId && (
-        <small>Запрос {error.requestId}</small>
-      )}
-    </p>
-  );
-}
-
-export function Page({
-  title,
-  subtitle,
-  children,
-}: {
-  title: string;
-  subtitle?: string;
-  children?: ReactNode;
-}) {
-  return (
-    <div className="page-head">
-      <div>
-        <h1>{title}</h1>
-        {subtitle && <p>{subtitle}</p>}
-      </div>
-      {children}
-    </div>
-  );
-}
 const activeLabel = (status: Account["status"]) =>
   status === "ACTIVE" ? "Активен" : "Заблокирован";
 function Status({ status }: { status: Account["status"] }) {

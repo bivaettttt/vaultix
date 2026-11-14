@@ -66,3 +66,13 @@ test("mobile operator opens authorized management views", async ({ page }) => {
     .poll(() => page.evaluate(() => document.documentElement.scrollWidth))
     .toBe(390);
 });
+
+test("admin runs a real concurrent scenario", async ({ page }) => {
+  await login(page, "admin");
+  await page.getByRole("link", { name: "Лаборатория" }).click();
+  await page.getByRole("button", { name: "Два конкурентных списания" }).click();
+  await page.getByRole("button", { name: "Запустить проверку" }).click();
+  await expect(page.getByText("Проверка пройдена")).toBeVisible();
+  await expect(page.getByText(/HTTP 201/)).toBeVisible();
+  await expect(page.getByText(/HTTP 409/)).toBeVisible();
+});

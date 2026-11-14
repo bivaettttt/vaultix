@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { Check, Play, X } from "lucide-react";
 import { api, money } from "./api";
-import { ErrorNotice, Page } from "./main";
+import { ErrorNotice, Page } from "./ui";
 
 const scenarios = [
   [

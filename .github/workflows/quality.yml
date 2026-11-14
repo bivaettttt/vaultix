@@ -1,0 +1,58 @@
+name: Quality
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: vaultix
+          POSTGRES_PASSWORD: ci-local-postgres
+          POSTGRES_DB: vaultix_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U vaultix -d vaultix_test"
+          --health-interval 5s --health-timeout 3s --health-retries 10
+    env:
+      TEST_DATABASE_URL: postgresql+psycopg://vaultix:ci-local-postgres@127.0.0.1:5432/vaultix_test
+      TEST_LAB_DATABASE_URL: postgresql+psycopg://vaultix:ci-local-postgres@127.0.0.1:5432/vaultix_lab
+      VAULTIX_URL: http://127.0.0.1:8080
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.14'
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: pip install -r backend/requirements.txt pytest==9.2.0 ruff==0.17.5
+      - run: ruff check backend tests scripts && ruff format --check backend tests scripts
+      - run: PYTHONPATH=backend python scripts/openapi.py --check && python scripts/verify-docs.py
+      - name: Apply PostgreSQL migrations and run tests
+        run: |
+          PGPASSWORD=ci-local-postgres psql -h 127.0.0.1 -U vaultix -d vaultix_test -v ON_ERROR_STOP=1 -f scripts/init-db.sql
+          DATABASE_URL="$TEST_DATABASE_URL" alembic -c backend/alembic.ini upgrade head
+          DATABASE_URL="$TEST_LAB_DATABASE_URL" alembic -c backend/alembic.ini upgrade head
+          pytest -q
+      - working-directory: frontend
+        run: npm ci && npm run format:check && npm run build
+      - run: docker compose up --build --wait
+      - working-directory: frontend
+        run: npx playwright install --with-deps chromium && npm run test:e2e
+      - if: failure()
+        run: docker compose logs
+      - if: always()
+        run: docker compose down -v

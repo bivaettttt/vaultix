@@ -1,0 +1,48 @@
+name: vaultix
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: vaultix
+      POSTGRES_DB: vaultix
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-local-vaultix-db}
+    volumes:
+      - postgres:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/01-lab.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U vaultix -d vaultix"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+  backend:
+    build: ./backend
+    environment:
+      APP_ENV: demo
+      DATABASE_URL: postgresql+psycopg://vaultix:${POSTGRES_PASSWORD:-local-vaultix-db}@db/vaultix
+      LAB_DATABASE_URL: postgresql+psycopg://vaultix:${POSTGRES_PASSWORD:-local-vaultix-db}@db/vaultix_lab
+      DEMO_PASSWORD: ${DEMO_PASSWORD:-Vaultix-demo-local}
+    command:
+      - /bin/sh
+      - -ec
+      - |
+        alembic upgrade head
+        DATABASE_URL="$$LAB_DATABASE_URL" alembic upgrade head
+        python -m vaultix.seed
+        exec uvicorn vaultix.api.main:app --host 0.0.0.0 --port 8000
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "from urllib.request import urlopen; urlopen('http://127.0.0.1:8000/api/health', timeout=2).close()"]
+      interval: 3s
+      timeout: 4s
+      retries: 30
+  frontend:
+    build: ./frontend
+    ports:
+      - "127.0.0.1:${VAULTIX_PORT:-8080}:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+volumes:
+  postgres:

@@ -199,3 +199,73 @@ def test_lab_scenarios(engine, scenario):
         assert result["passed"], result["checks"]
     finally:
         sandbox.dispose()
+
+
+def test_staff_workflow(engine, pair):
+    _, source, destination = pair
+    identifier = uuid4().hex[:24]
+    with engine.begin() as conn:
+        for role in ("ADMIN", "OPERATOR"):
+            query(
+                conn,
+                """INSERT INTO users(username,name,password_hash,role)
+                   VALUES (:username,:name,:digest,:role)""",
+                username=f"{role.lower()}-{identifier}",
+                name=role,
+                digest=passwords.hash("test-password-local"),
+                role=role,
+            )
+    app = create_app(engine, secure=False)
+    with signed(app, f"operator-{identifier}") as operator:
+        assert (
+            operator.put(
+                "/api/limits", json={"per_transfer": 1, "per_day": 1}
+            ).status_code
+            == 403
+        )
+        changed = operator.patch(f"/api/accounts/{source}", json={"status": "BLOCKED"})
+        assert changed.status_code == 200
+        matching = [
+            a
+            for a in operator.get("/api/audit").json()
+            if a["request_id"] == changed.headers["X-Request-ID"]
+        ]
+        assert matching[0]["object_id"] == source
+        assert matching[0]["result"] == "BLOCKED"
+        assert operator.post("/api/lab/success").json() == {"code": "ROLE_FORBIDDEN"}
+        transfer = operator.post(
+            "/api/transfers",
+            json={
+                "source_id": source,
+                "destination_id": destination,
+                "amount_minor": 1,
+            },
+            headers={"Idempotency-Key": "blocked"},
+        )
+        assert transfer.json() == {"code": "ACCOUNT_BLOCKED"}
+    with signed(app, f"admin-{identifier}") as admin:
+        assert admin.post("/api/lab/success").json() == {"code": "LAB_DISABLED"}
+        user = admin.post(
+            "/api/users",
+            json={
+                "username": f"new-{identifier}",
+                "name": "Synthetic",
+                "role": "CUSTOMER",
+                "password": "test-password-local",
+            },
+        )
+        assert user.status_code == 201
+        owner = user.json()["id"]
+        assert (
+            admin.post(
+                "/api/accounts",
+                json={"owner_id": owner, "name": "Staff opening", "funding_minor": 999},
+            ).json()["balance_minor"]
+            == 999
+        )
+        with signed(app, f"new-{identifier}") as customer:
+            assert (
+                admin.patch(f"/api/users/{owner}", json={"active": False}).status_code
+                == 200
+            )
+            assert customer.get("/api/me").status_code == 401
