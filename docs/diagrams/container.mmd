@@ -1,0 +1,12 @@
+C4Container
+Person(user, "Vaultix user")
+System_Boundary(vaultix, "Vaultix") {
+  Container(web, "Web UI", "React / nginx", "Role-specific routes and API proxy")
+  Container(api, "API", "FastAPI", "Authorization, posting and scenario orchestration")
+  ContainerDb(db, "Vaultix database", "PostgreSQL", "Ledger, accounts, sessions and audit")
+  ContainerDb(lab, "Lab database", "PostgreSQL", "Isolated scenario fixtures")
+}
+Rel(user, web, "Uses")
+Rel(web, api, "Calls", "HTTP / JSON")
+Rel(api, db, "Transacts")
+Rel(api, lab, "Runs fixed scenarios when enabled")

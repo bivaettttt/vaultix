@@ -1,0 +1,6 @@
+C4Context
+Person(customer, "Customer", "Own accounts and internal transfers")
+Person(staff, "Operator and administrator", "Operations, users, limits, audit and lab")
+System(vaultix, "Vaultix", "Educational RUB ledger and reliability lab")
+Rel(customer, vaultix, "Uses", "Web UI")
+Rel(staff, vaultix, "Uses", "Web UI")

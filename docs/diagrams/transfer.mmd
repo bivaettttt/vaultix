@@ -1,0 +1,22 @@
+sequenceDiagram
+ actor User
+ participant API
+ participant Posting
+ participant PostgreSQL
+ User->>API: POST /api/transfers with Idempotency-Key
+ API->>Posting: Actor and validated payload
+ Posting->>PostgreSQL: Begin and lock actor/key
+ alt Receipt exists
+  PostgreSQL-->>Posting: Stored payload digest and outcome
+  Posting-->>API: Replay or conflict
+ else New request
+  Posting->>PostgreSQL: Lock limits and accounts in UUID order
+  Posting->>PostgreSQL: Read balance and UTC-day usage
+  opt Accepted
+   Posting->>PostgreSQL: Insert journal and two entries
+  end
+  Posting->>PostgreSQL: Persist outcome and audit then commit
+  PostgreSQL-->>Posting: Commit or rollback
+  Posting-->>API: Outcome
+ end
+ API-->>User: JSON and request ID

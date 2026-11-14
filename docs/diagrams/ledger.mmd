@@ -1,0 +1,8 @@
+erDiagram
+ USERS ||--o{ SESSIONS : authenticates
+ USERS ||--o{ ACCOUNTS : owns
+ USERS ||--o{ IDEMPOTENCY : scopes
+ USERS o|--o{ AUDIT : initiates
+ USERS o|--o{ JOURNALS : posts
+ JOURNALS ||--|{ ENTRIES : contains
+ ACCOUNTS ||--o{ ENTRIES : receives

@@ -1,0 +1,32 @@
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" id="Vaultix" targetNamespace="https://vaultix.local/bpmn">
+  <bpmn:process id="Transfer" isExecutable="false">
+    <bpmn:startEvent id="start" name="Transfer received" />
+    <bpmn:task id="auth" name="Authorize and validate request" />
+    <bpmn:task id="lock" name="Lock key and check receipt" />
+    <bpmn:exclusiveGateway id="receipt" name="Existing receipt?" />
+    <bpmn:task id="replay" name="Return replay or key conflict" />
+    <bpmn:task id="check" name="Lock accounts and evaluate rules" />
+    <bpmn:exclusiveGateway id="eligible" name="Rules pass?" />
+    <bpmn:task id="reject" name="Commit rejection receipt and audit" />
+    <bpmn:task id="post" name="Post and commit journal and receipt" />
+    <bpmn:boundaryEvent id="failure" name="Posting error" attachedToRef="post">
+      <bpmn:errorEventDefinition />
+    </bpmn:boundaryEvent>
+    <bpmn:task id="rollback" name="Rollback and return internal error" />
+    <bpmn:endEvent id="done" name="Response returned" />
+    <bpmn:sequenceFlow id="f0" sourceRef="start" targetRef="auth" name="" />
+    <bpmn:sequenceFlow id="f1" sourceRef="auth" targetRef="lock" name="Authorized and valid" />
+    <bpmn:sequenceFlow id="f2" sourceRef="auth" targetRef="done" name="Invalid or unauthorized" />
+    <bpmn:sequenceFlow id="f3" sourceRef="lock" targetRef="receipt" name="" />
+    <bpmn:sequenceFlow id="f4" sourceRef="receipt" targetRef="replay" name="Yes" />
+    <bpmn:sequenceFlow id="f5" sourceRef="replay" targetRef="done" name="" />
+    <bpmn:sequenceFlow id="f6" sourceRef="receipt" targetRef="check" name="No" />
+    <bpmn:sequenceFlow id="f7" sourceRef="check" targetRef="eligible" name="" />
+    <bpmn:sequenceFlow id="f8" sourceRef="eligible" targetRef="reject" name="No" />
+    <bpmn:sequenceFlow id="f9" sourceRef="eligible" targetRef="post" name="Yes" />
+    <bpmn:sequenceFlow id="f10" sourceRef="reject" targetRef="done" name="" />
+    <bpmn:sequenceFlow id="f11" sourceRef="post" targetRef="done" name="" />
+    <bpmn:sequenceFlow id="f12" sourceRef="failure" targetRef="rollback" name="" />
+    <bpmn:sequenceFlow id="f13" sourceRef="rollback" targetRef="done" name="" />
+  </bpmn:process>
+</bpmn:definitions>

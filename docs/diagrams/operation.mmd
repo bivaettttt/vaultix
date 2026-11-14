@@ -1,0 +1,13 @@
+stateDiagram-v2
+ [*] --> Validating
+ Validating --> Rejected: Business rule fails
+ Validating --> Posting: Rules pass
+ Posting --> Posted: Commit
+ Posting --> RolledBack: Internal failure
+ Rejected --> [*]
+ Posted --> [*]
+ RolledBack --> [*]
+ note right of Posted
+  Immutable journal
+  Matching retry replays receipt
+ end note
