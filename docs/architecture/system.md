@@ -17,3 +17,9 @@ READ COMMITTED uses a transaction advisory lock for the actor/key, a shared lock
 ## Границы доверия / Trust boundaries
 
 Opaque sessions with hashed tokens at rest, HttpOnly SameSite cookies, Origin checks for unsafe browser requests, Argon2id passwords and server-side role/ownership checks. Audit contains identifiers and outcomes. The lab uses a separate database and fixed scenarios. Trusted local operators control database ownership, backups and startup configuration.
+
+## Диаграммы / Diagrams
+
+[BPMN 2.0](../diagrams/transfer.bpmn) · [UML sequence](../diagrams/transfer.mmd) · [Operation state machine](../diagrams/operation.mmd) · [ERD](../diagrams/ledger.mmd) · [C4 context](../diagrams/context.mmd) · [C4 containers](../diagrams/container.mmd)
+
+PostgreSQL references: [READ COMMITTED](https://www.postgresql.org/docs/16/transaction-iso.html) and [explicit locks](https://www.postgresql.org/docs/16/explicit-locking.html).
